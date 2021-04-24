@@ -1,0 +1,97 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Laravel\Lumen\Routing\Controller as BaseController;
+
+use Illuminate\Http\Request;
+
+use App\Func\Func;
+use App\Role;
+use Illuminate\Support\Facades\Validator;
+
+class RoleController extends BaseController
+{
+    public function add(Request $request)
+    {
+        # MENDAPATKAN REQUEST BERUPA ARRAY
+        $req = $request->all();
+
+        # SETTING VALIDATOR UNTUK REQUEST
+        $validator = Validator::make($req, [
+            "jenis_aplikasi"=> "required"                        
+        ]);
+
+        $jenisAplikasi = $request->input("jenis_aplikasi");
+        unset($req["jenis_aplikasi"]);
+                
+        $result = Role::create($req);
+        return Func::genresponse(1,"ok",$result);        
+    }
+
+    public function upd(Request $request)
+    {        
+
+        # MENDAPATKAN REQUEST BERUPA ARRAY
+        $req = $request->all();
+
+        # SETTING VALIDATOR UNTUK REQUEST
+        $validator = Validator::make($req, [
+            "jenis_aplikasi"=> "required"                  
+        ]);
+
+        # KALAU NGGA VALID RETURN ERROR
+        if($validator->fails()){
+            return Func::genresponse(0,"Request tidak valid",$validator->errors()->all());
+        }
+                
+        # MENGAMBIL JENIS APLIKASI, LALU KITA HAPUS KARENA TIDAK ADA TABLE BERNAMA JENIS APLIKASI
+        $jenisAplikasi = $request->input("jenis_aplikasi");
+        unset($req["jenis_aplikasi"]);
+
+        $result = Role::where("master_hak_akses_id", $req['master_hak_akses_id'])
+                             ->update(['nama'=>$req['nama']]);
+
+        if($result == 1)
+        return Func::genresponse(1,"ok",$result);        
+        else
+        return Func::genresponse(0,"Update gagal, data tidak ditemukan",$result);        
+    }    
+
+    public function del(Request $request)
+    {        
+                
+
+        # SETTING VALIDATOR UNTUK REQUEST
+        $validator = Validator::make($request->all(), [            
+            "master_hak_akses_id"=>"required"            
+        ]);
+
+        # KALAU NGGA VALID RETURN ERROR
+        if($validator->fails()){
+            return Func::genresponse(0,"Request tidak valid",$validator->errors()->all());
+        }
+
+        $result = Role::where("master_hak_akses_id", $request['master_hak_akses_id'])
+                             ->delete();
+
+        return Func::genresponse(1,"ok",$result);        
+    }    
+
+    public function get(Request $request)
+    {        
+                
+        $req = $request->all();                
+
+        # JADI KITA GANTI KEY NAME NYA DARI ROLE KE MASTER_HAK_AKSES_ID LALU KITA HAPUS DARI ARRAY        
+        if(isset($req["role"])){
+            $req['master_hak_akses_id'] = $req["role"];
+            unset($req["role"]);
+        }
+
+        $result = Role::where($req)->get();
+
+        return Func::genresponse(1,"ok",$result);        
+    }    
+    
+}
